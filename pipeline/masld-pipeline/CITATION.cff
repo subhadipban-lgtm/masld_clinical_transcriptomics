@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+title: "MASLD DrugScope: Personalized Drug Prediction for MASLD via a Ferroptosis-Aware GraphSAGE GNN"
+message: "If you use this software or pipeline, please cite both the software and the associated paper."
+type: software
+authors:
+  - given-names: Subhadip
+    family-names: Banerjee
+    affiliation: "Mae Fah Luang University & University of Antwerp"
+  - given-names: Rawiwan
+    family-names: Charoensupa
+    affiliation: "Mae Fah Luang University"
+  - given-names: Wim
+    family-names: Vanden Berghe
+    affiliation: "University of Antwerp"
+repository-code: "https://github.com/yourusername/masld-drugscope"
+version: "1.0.0"
+date-released: "2026-07-15"
+license: MIT
+keywords:
+  - MASLD
+  - NAFLD
+  - NASH
+  - ferroptosis
+  - liver fibrosis
+  - GraphSAGE
+  - graph neural network
+  - drug repurposing
+  - personalized medicine
+  - bioinformatics
+preferred-citation:
+  type: article
+  title: "Decoding the functional signature of ferroptosis-driven fibrosis with a personalised GNN"
+  authors:
+    - given-names: Subhadip
+      family-names: Banerjee
+    - given-names: Rawiwan
+      family-names: Charoensupa
+    - given-names: Wim
+      family-names: Vanden Berghe
+  year: 2026
+  journal: "[TBD]"
+  doi: "[TBD]"

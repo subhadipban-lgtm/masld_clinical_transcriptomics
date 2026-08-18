@@ -1,0 +1,12 @@
+{
+  "output": "masld-cdss/data/ferroptosis_driver_ferrdb.csv",
+  "derived_from": [
+    "http://www.zhounan.org/ferrdb/current/operations/browsegene.html?genetype=driver",
+    "http://www.datasj.com:40013/bt2104/api/gene/"
+  ],
+  "description": "FerrDb V2 human driver genes filtered, HGNC-mapped, and deduplicated",
+  "script": "download_ferrdb_v2",
+  "gene_count": 264,
+  "git_commit": "79867502ed699734b6e7ec8811c5fceedc5bdf7e",
+  "timestamp": "2026-08-17T05:37:21.260823+00:00"
+}

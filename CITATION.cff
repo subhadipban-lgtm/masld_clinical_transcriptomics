@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this tool, please cite the accompanying manuscript."
+authors:
+  - family-names: "Banerjee"
+    given-names: "Souvik"
+  - family-names: "Charoensup"
+    given-names: "Udom"
+  - family-names: "Vanden Berghe"
+    given-names: "Pieter"
+title: "MASLD-CDSS: MASLD Computational Drug Suggestion System"
+version: 1.1.0
+date-released: 2026-08-19
+repository-code: "https://github.com/subhadipban-lgtm/masld_clinical_transcriptomics"
+license: "MIT"

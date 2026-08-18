@@ -1,0 +1,39 @@
+# R Package Dependencies for MASLD Drug Prediction Pipeline
+# Install with: Rscript -e 'install.packages(c("BiocManager")); BiocManager::install(c(...))'
+
+# CRAN packages
+tidyverse>=4.3.0
+dplyr>=1.1.0
+readr>=2.1.0
+tibble>=3.2.0
+tidyr>=1.3.0
+pheatmap>=1.0.12
+RColorBrewer>=1.1.3
+ggrepel>=0.9.3
+ggpubr>=0.6.0
+corrplot>=0.92
+msigdbr>=7.5.1
+igraph>=1.4.0
+ggraph>=2.1.0
+patchwork>=1.1.2
+WGCNA>=1.72
+scales>=1.2.1
+stringr>=1.5.0
+forcats>=1.0.0
+purrr>=1.0.0
+
+# Bioconductor packages
+GEOquery>=2.66.0
+sva>=3.46.0
+limma>=3.54.0
+edgeR>=3.40.0
+dorothea>=1.16.0
+viper>=1.34.0
+clusterProfiler>=4.6.0
+org.Hs.eg.db>=3.16.0
+ReactomePA>=1.40.0
+enrichplot>=1.18.0
+STRINGdb>=2.12.0
+GOplot>=1.0.2
+impute>=1.72.0
+preprocessCore>=1.60.0

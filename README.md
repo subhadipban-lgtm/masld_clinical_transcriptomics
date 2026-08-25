@@ -1,7 +1,7 @@
-# MASLD-CDSS: Curated Database Browser and Analysis Pipeline
+# MASLD-Clinical_Transcriptomics
 
-This repository contains (1) a curated drug–gene interaction database and browser
-inputs for hypothesis generation, and (2) the complete, numbered analysis pipeline
+
+This repository contains the complete, numbered analysis pipeline
 for the accompanying manuscript.
 
 **Manuscript:** *Independent hepatic transcriptional signatures converge on the

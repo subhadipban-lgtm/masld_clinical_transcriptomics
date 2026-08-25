@@ -20,11 +20,11 @@ data/                  curated databases and reference sets (FerrDb V2 filtered
                        driver/suppressors with provenance, expression matrix,
                        scored metadata)
 pipeline/masld-pipeline/
-  scripts/R/           numbered R stages (01–42): harmonisation, DGE, WGCNA,
+  scripts/R/           numbered R stages (01–50): harmonisation, DGE, WGCNA,
                        fgsea, WS15 locked-signature build, WS27 per-stage-pair
                        limma-trend contrasts
-  scripts/python/      numbered Python stages (09–47): GNN baselines, trial
-                       benchmarks, deconvolution, WS26–WS28 ferroptosis
+  scripts/python/      numbered Python stages (09–53): GNN baselines, trial
+                       benchmarks, deconvolution, WS26–WS31 ferroptosis
                        follow-ups (stage-resolved GSEA, paired biopsies,
                        cell-death comparison, co-expression network with
                        permutation null, single-cell effector localisation),

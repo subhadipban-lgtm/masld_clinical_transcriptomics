@@ -4,9 +4,19 @@ This repository contains (1) a curated drug–gene interaction database and brow
 inputs for hypothesis generation, and (2) the complete, numbered analysis pipeline
 for the accompanying manuscript.
 
-**Manuscript:** *An early, suppressor-biased ferroptosis response precedes matrisome
-convergence in MASLD fibrosis: a multi-cohort transcriptional benchmarking study*
-(Banerjee, Charoensup, Vanden Berghe). DOI: [to be added on deposit].
+**Manuscript:** *Independent hepatic transcriptional signatures converge on the
+matrisome and fail at the F2 treatment boundary in MASLD fibrosis: a multi-cohort
+benchmarking study* (Banerjee, Charoensup, Vanden Berghe). DOI: [to be added on
+deposit].
+
+**Headline findings:** independently derived MASLD fibrosis signatures — five
+published panels and our own — converge on a shared matrisome programme that is
+present from the earliest stage transition, rises with fibrosis, and replicates in
+an independent cohort; every signature fails at the F2 treatment-eligibility
+boundary, a biological ceiling of bulk transcriptomics. The ferroptosis programme,
+evaluated under a size-matched random-set null guard, does not carry staging
+information beyond genome-wide expression drift and is reported as a
+well-characterised negative.
 
 **Disclaimer:** For research and hypothesis generation only. No therapeutic
 recommendations are made. The browser performs lookup of curated interactions
@@ -21,18 +31,21 @@ data/                  curated databases and reference sets (FerrDb V2 filtered
                        scored metadata)
 pipeline/masld-pipeline/
   scripts/R/           numbered R stages (01–50): harmonisation, DGE, WGCNA,
-                       fgsea, WS15 locked-signature build, WS27 per-stage-pair
-                       limma-trend contrasts
+                       fgsea, WS15 locked-signature build, per-stage-pair
+                       limma-trend contrasts (WS27, discovery; WS30, Fujiwara)
   scripts/python/      numbered Python stages (09–53): GNN baselines, trial
-                       benchmarks, deconvolution, WS26–WS31 ferroptosis
-                       follow-ups (stage-resolved GSEA, paired biopsies,
-                       cell-death comparison, co-expression network with
-                       permutation null, single-cell effector localisation),
-                       and the manuscript build script
+                       benchmarks, deconvolution, WS26–WS31 follow-ups
+                       (ferroptosis scoring with random-set null guard,
+                       stage-resolved GSEA in both cohorts, paired-biopsy
+                       trajectory, drift-adjusted cell-death pathway table,
+                       permutation-nulled co-expression network, single-cell
+                       effector localisation across donors), and the
+                       revised-manuscript build script
 ```
 
 Scripts are numbered by workflow stage (WS); each writes `results/stats_*.json`
-provenance alongside its outputs. Random seeds are fixed and recorded.
+provenance alongside its outputs. Random seeds are fixed and recorded, and every
+mean-z pathway score is reported against a 1,000-set size-matched random null.
 
 ## Installation and usage
 
@@ -53,4 +66,4 @@ Please cite the accompanying manuscript (DOI above) and this repository.
 ## License
 
 MIT (code); database contents retain their upstream licences (CTD, DrugBank,
-DrugCentral, DGIdb, FerrDb).
+DrugCentral, DGIdb, FerrDb, MSigDB/QuickGO, GEO).

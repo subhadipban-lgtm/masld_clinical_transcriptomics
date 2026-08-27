@@ -7,7 +7,7 @@ authors:
     given-names: "Rawiwan"
   - family-names: "Vanden Berghe"
     given-names: "Wim"
-title: "MASLD-CDSS: curated drug-gene database browser and analysis pipeline for MASLD fibrosis transcriptional benchmarking"
+title: "Independent hepatic transcriptional signatures converge on the matrisome and fail at the F2 treatment boundary in MASLD fibrosis: a multi-cohort benchmarking study"
 version: 1.2.2
 date-released: 2026-08-24
 repository-code: "https://github.com/subhadipban-lgtm/masld_clinical_transcriptomics"
@@ -17,9 +17,9 @@ preferred-citation:
   title: "Independent hepatic transcriptional signatures converge on the matrisome and fail at the F2 treatment boundary in MASLD fibrosis: a multi-cohort benchmarking study"
   authors:
     - family-names: "Banerjee"
-      given-names: "Souvik"
+      given-names: "Subhadip"
     - family-names: "Charoensup"
-      given-names: "Udom"
+      given-names: "Rawiwan"
     - family-names: "Vanden Berghe"
-      given-names: "Pieter"
+      given-names: "Wim"
   year: 2026

@@ -64,8 +64,8 @@ ens = pd.read_csv(KAM/"ensembl_mapping.tsv", sep="\t")
 sym_dict = dict(zip(ens["ensembl_gene_id"].astype(str).str.strip(), ens["external_gene_name"].astype(str).str.strip()))
 
 # Fujiwara n=213 (log2 GEO expression; counts unavailable for the 213-sample series — deviation noted)
-fuj = pd.read_csv(ROOT/"masld-cdss/data/expression_matrix.csv", index_col=0)
-fuj_meta = pd.read_csv(ROOT/"masld-cdss/data/metadata_with_ferroptosis_scores.csv")
+fuj = pd.read_csv(ROOT/"data/expression_matrix.csv", index_col=0)
+fuj_meta = pd.read_csv(ROOT/"data/metadata_with_ferroptosis_scores.csv")
 fuj_meta["col"] = fuj_meta["dataset"] + "." + fuj_meta["title"]
 fuj_meta = fuj_meta.set_index("col")
 fuj_meta["stage"] = pd.to_numeric(fuj_meta["fibrosis stage:ch1"], errors="coerce")

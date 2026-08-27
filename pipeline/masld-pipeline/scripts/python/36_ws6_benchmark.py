@@ -28,7 +28,7 @@ cohorts={}
 D=pd.read_pickle('results/decisive_test/discovery_qnorm.pkl')
 m349=pd.read_csv('data/discovery_cohort_349.csv').set_index('sample_id')
 cohorts['Discovery']=(D,(m349.loc[D.columns,'fibrosis_group']=='Late').astype(int).values,m349.loc[D.columns,'fibrosis_stage'].values)
-fm=pd.read_csv('masld-cdss/data/metadata_with_ferroptosis_scores.csv'); fm['col']=fm['dataset']+'.'+fm['title']; fm=fm.set_index('col')
+fm=pd.read_csv('data/metadata_with_ferroptosis_scores.csv'); fm['col']=fm['dataset']+'.'+fm['title']; fm=fm.set_index('col')
 F=pd.read_pickle('results/decisive_test/fujiwara_qnorm.pkl')
 fs=pd.to_numeric(fm['fibrosis stage:ch1'],errors='coerce').reindex(F.columns)
 cohorts['Fujiwara']=(F.loc[:,fs.notna()],(fs[fs.notna()]>=3).astype(int).values,fs[fs.notna()].values)

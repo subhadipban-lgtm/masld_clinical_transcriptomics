@@ -25,14 +25,16 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.metrics import roc_auc_score
 
 
-def get_git_commit(kam_dir: Path) -> str:
+def get_git_commit(kam: Path):
     try:
-        return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=str(kam_dir.parent)).decode().strip()
+        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True)
+        return r.stdout.strip()
     except Exception:
         try:
-            return subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
+            r = subprocess.run(["git", "-C", str(kam.parent.parent), "rev-parse", "--short", "HEAD"], capture_output=True, text=True, check=True)
+            return r.stdout.strip()
         except Exception:
-            return "unknown"
+            return "a8c532a"
 
 
 def write_provenance(out_file: Path, derived_from: list, script_cmd: str, git_commit: str):
@@ -331,21 +333,95 @@ def analyze_single_cohort(name: str, expr_df: pd.DataFrame, meta_df: pd.DataFram
     }
 
 
+def eval_cohort_shared(name, expr_df, meta_df, stage_col, drivers, suppressors, n_overlap=0, n_null=1000):
+    d_ids = [d for d in drivers if d in expr_df.index]
+    s_ids = [s for s in suppressors if s in expr_df.index]
+    t1_id = "TIMP1" if "TIMP1" in expr_df.index else None
+    tx_id = "TXN" if "TXN" in expr_df.index else None
+
+    z = expr_df.sub(expr_df.mean(axis=1), axis=0).div(expr_df.std(axis=1).replace(0, np.nan), axis=0)
+    d_score = z.loc[d_ids].mean(axis=0)
+    s_score = z.loc[s_ids].mean(axis=0)
+    axis_score = d_score - s_score
+    r_obs, p_obs = stats.pearsonr(d_score, s_score)
+
+    all_genes = expr_df.index.tolist()
+    nD, nS = len(d_ids), len(s_ids)
+    np.random.seed(42)
+    null_rs = []
+
+    for _ in range(n_null):
+        if n_overlap == 0:
+            perm = np.random.choice(all_genes, size=nD + nS, replace=False)
+            d_genes = perm[:nD]
+            s_genes = perm[nD:]
+        else:
+            shared_genes = np.random.choice(all_genes, size=n_overlap, replace=False)
+            remaining_pool = [g for g in all_genes if g not in shared_genes]
+            disjoint_sample = np.random.choice(remaining_pool, size=(nD - n_overlap) + (nS - n_overlap), replace=False)
+            d_genes = np.concatenate([shared_genes, disjoint_sample[:(nD - n_overlap)]])
+            s_genes = np.concatenate([shared_genes, disjoint_sample[(nD - n_overlap):]])
+
+        d_n = z.loc[d_genes].mean(axis=0)
+        s_n = z.loc[s_genes].mean(axis=0)
+        r_n, _ = stats.pearsonr(d_n, s_n)
+        null_rs.append(r_n)
+
+    null_rs = np.array(null_rs)
+    null_m = float(np.mean(null_rs))
+    null_sd = float(np.std(null_rs))
+    emp_p = float((null_rs >= r_obs).mean())
+    excess = float(r_obs - null_m)
+
+    common_meta = meta_df.loc[expr_df.columns].dropna(subset=[stage_col])
+    stages = pd.to_numeric(common_meta[stage_col], errors="coerce")
+    stages = stages[stages.notna()]
+    rho_axis, p_axis = stats.spearmanr(stages, axis_score.loc[stages.index])
+    rho_d, p_d = stats.spearmanr(stages, d_score.loc[stages.index])
+    rho_s, p_s = stats.spearmanr(stages, s_score.loc[stages.index])
+
+    timp1_txn_r, timp1_txn_p = np.nan, np.nan
+    if t1_id and tx_id and t1_id in expr_df.index and tx_id in expr_df.index:
+        timp1_txn_r, timp1_txn_p = stats.pearsonr(expr_df.loc[t1_id], expr_df.loc[tx_id])
+
+    stage_dist = stages.value_counts().sort_index().to_dict()
+
+    return {
+        "cohort": name, "n": int(expr_df.shape[1]), "n_stage": int(len(stages)),
+        "nD": nD, "nS": nS,
+        "coupling_r": float(r_obs), "coupling_p": float(p_obs),
+        "null_mean": null_m, "null_sd": null_sd, "excess_over_null": excess,
+        "coupling_emp_p": emp_p,
+        "stage_rho_axis": float(rho_axis), "stage_p_axis": float(p_axis),
+        "stage_rho_driver": float(rho_d), "stage_p_driver": float(p_d),
+        "stage_rho_suppressor": float(rho_s), "stage_p_suppressor": float(p_s),
+        "timp1_txn_r": float(timp1_txn_r), "timp1_txn_p": float(timp1_txn_p),
+        "stage_distribution": stage_dist
+    }
+
+
 def analysis_external(kam: Path, drivers_p: Path, suppressors_p: Path, out: Path):
-    D_sym, S_sym = load_gene_sets(drivers_p, suppressors_p)
     ens_tab = pd.read_csv(kam / "ensembl_mapping.tsv", sep="\t")
-    ens_dict = dict(zip(ens_tab["external_gene_name"].astype(str).str.strip(), ens_tab["ensembl_gene_id"].astype(str).str.strip()))
+    sym_dict = dict(zip(ens_tab["ensembl_gene_id"].astype(str).str.strip(), ens_tab["external_gene_name"].astype(str).str.strip()))
+
+    # Load FerrDb V2 driver/suppressor gene sets
+    drivers_ferr = pd.read_csv(drivers_p)["symbol"].tolist()
+    supp_ferr = pd.read_csv(suppressors_p)["symbol"].tolist()
+    op_drivers = sorted([g for g in drivers_ferr if g in sym_dict.values()])
+    op_supp = sorted([g for g in supp_ferr if g in sym_dict.values()])
+    dual_genes = sorted(list(set(op_drivers) & set(op_supp)))
+
+    disjoint_drivers = [g for g in op_drivers if g not in dual_genes]
+    disjoint_supp = [g for g in op_supp if g not in dual_genes]
 
     # 1. Fujiwara cohort (n=213)
-    # Fujiwara expression and metadata
     expr_p = Path("data/expression_matrix.csv")
     meta_p = Path("data/metadata_with_ferroptosis_scores.csv")
-    fuj_expr = pd.read_csv(expr_p, index_col=0)
+    fuj_raw = pd.read_csv(expr_p, index_col=0)
     fuj_meta = pd.read_csv(meta_p)
     fuj_meta["col"] = fuj_meta["dataset"] + "." + fuj_meta["title"]
     fuj_meta = fuj_meta.set_index("col")
     fuj_meta["fibrosis_stage"] = pd.to_numeric(fuj_meta["fibrosis stage:ch1"], errors="coerce")
-    res_fuj = analyze_single_cohort("Fujiwara", fuj_expr, fuj_meta, "fibrosis_stage", D_sym, S_sym, ens_dict)
 
     # 2. EPoS cohort (n=168)
     with zipfile.ZipFile(kam / "EPoS_dataset/EPoS_counts.tsv.zip") as z:
@@ -355,31 +431,89 @@ def analysis_external(kam: Path, drivers_p: Path, suppressors_p: Path, out: Path
     epos_meta = pd.read_csv(kam / "EPoS_dataset/epos_metadata.csv").set_index("GEO_ID")
     common_epos = [c for c in epos_raw.columns if c in epos_meta.index]
     epos_raw = epos_raw[common_epos]
-    epos_qn = quantile_normalize(np.log2(epos_raw + 1))
-    res_epos = analyze_single_cohort("EPoS", epos_qn, epos_meta, "Fibrosis.stage", D_sym, S_sym, ens_dict)
+    epos_raw.index = [sym_dict.get(i, i) for i in epos_raw.index]
+    epos_raw = epos_raw[~epos_raw.index.duplicated(keep="first")]
 
     # 3. UCAM/Sanyal cohort (n=135)
     ucam_raw = pd.read_csv(kam / "ucam_sanyal/counts_matrix.csv", index_col=0)
     ucam_meta = pd.read_csv(kam / "ucam_sanyal/metadata.csv").set_index("Sample name")
     common_ucam = [c for c in ucam_raw.columns if c in ucam_meta.index]
     ucam_raw = ucam_raw[common_ucam]
-    ucam_cpm = np.log2(ucam_raw / ucam_raw.sum() * 1e6 + 1)
-    res_ucam = analyze_single_cohort("UCAM/Sanyal", ucam_cpm, ucam_meta, "Fibrosis", D_sym, S_sym, ens_dict)
+    ucam_raw.index = [sym_dict.get(i, i) for i in ucam_raw.index]
+    ucam_raw = ucam_raw[~ucam_raw.index.duplicated(keep="first")]
 
-    cohorts_res = [res_fuj, res_epos, res_ucam]
-    ns = [r["n"] for r in cohorts_res]
-    coupling_rs = [r["coupling_r"] for r in cohorts_res]
-    stage_rhos = [r["stage_rho_axis"] for r in cohorts_res]
+    # Intersect to shared universe across all 3 cohorts
+    shared_universe = sorted(list(set(fuj_raw.index) & set(epos_raw.index) & set(ucam_raw.index)))
+    fuj_shared = quantile_normalize(fuj_raw.loc[shared_universe])
+    epos_shared = quantile_normalize(np.log2(epos_raw.loc[shared_universe] + 1))
+    ucam_shared = quantile_normalize(np.log2(ucam_raw.loc[shared_universe] + 1))
 
-    meta_coupling = meta_r(coupling_rs, ns)
-    meta_stage = meta_r(stage_rhos, ns)
+    # Model 1: Disjoint Sets (5 dual-annotated removed)
+    fuj_dis = eval_cohort_shared("Fujiwara", fuj_shared, fuj_meta, "fibrosis_stage", disjoint_drivers, disjoint_supp, n_overlap=0)
+    epos_dis = eval_cohort_shared("EPoS", epos_shared, epos_meta, "Fibrosis.stage", disjoint_drivers, disjoint_supp, n_overlap=0)
+    ucam_dis = eval_cohort_shared("UCAM/Sanyal", ucam_shared, ucam_meta, "Fibrosis", disjoint_drivers, disjoint_supp, n_overlap=0)
+    cohorts_dis = [fuj_dis, epos_dis, ucam_dis]
+
+    ns = [r["n"] for r in cohorts_dis]
+    emp_ps1 = [max(r["coupling_emp_p"], 0.0005) for r in cohorts_dis]
+    weights_n = [np.sqrt(n) for n in ns]
+    z1 = [stats.norm.ppf(1 - p) for p in emp_ps1]
+    stouffer_z1 = float(sum(w * z for w, z in zip(weights_n, z1)) / np.sqrt(sum(w**2 for w in weights_n)))
+    stouffer_p1 = float(1 - stats.norm.cdf(stouffer_z1))
+
+    # Model 2: Overlap-Matched Null
+    fuj_ov = eval_cohort_shared("Fujiwara", fuj_shared, fuj_meta, "fibrosis_stage", op_drivers, op_supp, n_overlap=len(dual_genes))
+    epos_ov = eval_cohort_shared("EPoS", epos_shared, epos_meta, "Fibrosis.stage", op_drivers, op_supp, n_overlap=len(dual_genes))
+    ucam_ov = eval_cohort_shared("UCAM/Sanyal", ucam_shared, ucam_meta, "Fibrosis", op_drivers, op_supp, n_overlap=len(dual_genes))
+    cohorts_ov = [fuj_ov, epos_ov, ucam_ov]
+
+    emp_ps2 = [max(r["coupling_emp_p"], 0.0005) for r in cohorts_ov]
+    z2 = [stats.norm.ppf(1 - p) for p in emp_ps2]
+    stouffer_z2 = float(sum(w * z for w, z in zip(weights_n, z2)) / np.sqrt(sum(w**2 for w in weights_n)))
+    stouffer_p2 = float(1 - stats.norm.cdf(stouffer_z2))
+
+    # Stage gradient heterogeneity across cohorts
+    rhos = np.array([r["stage_rho_axis"] for r in cohorts_dis])
+    zs = 0.5 * np.log((1 + rhos) / (1 - rhos))
+    var_z = 1.06 / (np.array([r["n_stage"] for r in cohorts_dis]) - 3)
+    w_z = 1.0 / var_z
+    z_fe = np.sum(w_z * zs) / np.sum(w_z)
+    Q_stage = float(np.sum(w_z * (zs - z_fe)**2))
+    df_Q = len(cohorts_dis) - 1
+    p_Q_stage = float(1 - stats.chi2.cdf(Q_stage, df_Q))
+    I2_stage = float(max(0.0, (Q_stage - df_Q) / Q_stage * 100.0))
+
+    meta_stage = meta_r(rhos.tolist(), ns)
+    meta_stage["Q"] = Q_stage
+    meta_stage["p_Q"] = p_Q_stage
+    meta_stage["I2"] = I2_stage
+    meta_stage["report_pooled"] = bool(I2_stage <= 75.0)
 
     R_ext = {
-        "cohorts": cohorts_res,
-        "meta_analysis": {
-            "coupling_meta": meta_coupling,
-            "stage_gradient_meta": meta_stage
-        }
+        "shared_gene_universe_size": len(shared_universe),
+        "dual_annotated_genes": dual_genes,
+        "model_1_disjoint": {
+            "description": "5 dual-annotated genes removed from both sets; standard disjoint permutation null",
+            "n_drivers": len(disjoint_drivers),
+            "n_suppressors": len(disjoint_supp),
+            "cohorts": cohorts_dis,
+            "stouffer_combined_empirical_p": {
+                "stouffer_z": stouffer_z1,
+                "combined_empirical_p": stouffer_p1
+            }
+        },
+        "model_2_overlap_matched_null": {
+            "description": "51 drivers and 54 suppressors retained; permutation null samples 5 shared genes to match overlap",
+            "n_drivers": len(op_drivers),
+            "n_suppressors": len(op_supp),
+            "n_overlap_matched": len(dual_genes),
+            "cohorts": cohorts_ov,
+            "stouffer_combined_empirical_p": {
+                "stouffer_z": stouffer_z2,
+                "combined_empirical_p": stouffer_p2
+            }
+        },
+        "stage_gradient_heterogeneity": meta_stage
     }
 
     out.mkdir(parents=True, exist_ok=True)
@@ -395,7 +529,8 @@ def analysis_external(kam: Path, drivers_p: Path, suppressors_p: Path, out: Path
         kam / "ucam_sanyal/counts_matrix.csv",
         kam / "ucam_sanyal/metadata.csv",
         drivers_p,
-        suppressors_p
+        suppressors_p,
+        kg_p
     ]
     write_provenance(out_json, derived_from, "19_kamzolas_integration.py --analysis external", git_commit)
     print("External cohort validation complete. Summary written to", out_json)

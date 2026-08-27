@@ -2,11 +2,11 @@ cff-version: 1.2.0
 message: "If you use this tool or pipeline, please cite the accompanying manuscript."
 authors:
   - family-names: "Banerjee"
-    given-names: "Souvik"
+    given-names: "Subhadip"
   - family-names: "Charoensup"
-    given-names: "Udom"
+    given-names: "Rawiwan"
   - family-names: "Vanden Berghe"
-    given-names: "Pieter"
+    given-names: "Wim"
 title: "MASLD-CDSS: curated drug-gene database browser and analysis pipeline for MASLD fibrosis transcriptional benchmarking"
 version: 1.2.2
 date-released: 2026-08-24

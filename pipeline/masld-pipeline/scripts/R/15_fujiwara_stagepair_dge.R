@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # WS30 Task 1 — per-adjacent-stage-pair DGE on the LOCKED WS15 Fujiwara matrix,
-# identical protocol to scripts/R/42_ws27_stagepair_dge.R (limma-trend, trend=TRUE, robust).
+# identical protocol to scripts/R/14_discovery_stagepair_dge.R (limma-trend, trend=TRUE, robust).
 suppressPackageStartupMessages(library(limma))
 args <- commandArgs(trailingOnly = TRUE)
 mat_csv <- args[1]; stage_csv <- args[2]; out_dir <- args[3]

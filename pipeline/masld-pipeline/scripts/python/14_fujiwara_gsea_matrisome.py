@@ -13,7 +13,7 @@ PRE-COMMITTED RULES (stated before any result is computed):
       one -> that arm replicated, the other discovery-only; neither -> discovery-only,
       Fujiwara shown regardless.
   R2 (Task 2): any leading-edge overlap with BH padj < 0.05 is disclosed with its genes.
-Run: python3 scripts/python/49_ws30_additions.py   (after the Fujiwara R DGE step)
+Run: python3 scripts/python/14_fujiwara_gsea_matrisome.py   (after the Fujiwara R DGE step)
 """
 import json
 import os
@@ -65,7 +65,7 @@ def write_provenance(output, inputs, extra=None, rows=None):
     prov = {"output": output,
             "derived_from": [{"path": p, "md5": md5(p), "bytes": os.path.getsize(p),
                               "rows": (rows or {}).get(p)} for p in inputs],
-            "script": "scripts/python/49_ws30_additions.py (+ scripts/R/50_ws30_fujiwara_stagepair_dge.R)",
+            "script": "scripts/python/14_fujiwara_gsea_matrisome.py (+ scripts/R/15_fujiwara_stagepair_dge.R)",
             "git_commit": os.popen("git rev-parse --short HEAD").read().strip(),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "random_seed": SEED, "permutations": PERMS}

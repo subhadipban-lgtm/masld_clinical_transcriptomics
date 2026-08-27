@@ -2,7 +2,7 @@
 """
 WS27 — ferroptosis follow-ups in the feasibility-doc priority order.
 
-2.6  Per-adjacent-stage-pair GSEA (DGE pre-computed by scripts/R/42_ws27_stagepair_dge.R,
+2.6  Per-adjacent-stage-pair GSEA (DGE pre-computed by scripts/R/14_discovery_stagepair_dge.R,
      limma-trend on the locked WS15 log2CPM discovery matrix).
 2.8  Paired-biopsy ferroptosis score change by trajectory (58 patients, raw second-biopsy
      counts -> CPM/log2 -> Ensembl-mapped -> z-scored across all 116 paired samples).
@@ -20,7 +20,7 @@ Pre-committed rules (stated before any result is computed):
   R3 (2.9): balance = driver mean-z MINUS suppressor mean-z. The ratio is not used because
       the denominator (a mean-z) crosses zero. Tests: Spearman vs stage; KW across stages.
 
-Run: python3 scripts/python/43_ws27_ferroptosis_followups.py   (after the R DGE step)
+Run: python3 scripts/python/09_ferroptosis_stagepair_gsea.py   (after the R DGE step)
 """
 
 import json
@@ -76,7 +76,7 @@ def write_provenance(output, inputs, extra=None):
         "output": output,
         "derived_from": [{"path": p, "md5": md5(p), "bytes": os.path.getsize(p)}
                          for p in inputs],
-        "script": "scripts/python/43_ws27_ferroptosis_followups.py (+ scripts/R/42_ws27_stagepair_dge.R for 2.6 DGE)",
+        "script": "scripts/python/09_ferroptosis_stagepair_gsea.py (+ scripts/R/14_discovery_stagepair_dge.R for 2.6 DGE)",
         "git_commit": os.popen("git rev-parse --short HEAD").read().strip(),
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "random_seed": SEED, "n_permutations": PERMS,
@@ -132,7 +132,7 @@ def main():
     for a, b in pairs:
         fn = f"{OUT}/stagepair_dge_F{a}vF{b}.csv"
         if not os.path.exists(fn):
-            raise FileNotFoundError(fn + " — run scripts/R/42_ws27_stagepair_dge.R first")
+            raise FileNotFoundError(fn + " — run scripts/R/14_discovery_stagepair_dge.R first")
         d = pd.read_csv(fn)
         dge_inputs.append(fn)
         d = d.dropna(subset=["t"]).sort_values("t", ascending=False)
@@ -145,7 +145,7 @@ def main():
     g["p_adj"] = multipletests(g.p, method="fdr_bh")[1]
     g.to_csv(f"{OUT}/stagepair_gsea_results.csv", index=False)
     write_provenance("stagepair_gsea_results.csv", dge_inputs + [FILES["drivers"], FILES["suppressors"]],
-                     extra={"note": "BH across all 8 tests (4 pairs x 2 sets); DGE = limma-trend on locked log2CPM matrix, scripts/R/42_ws27_stagepair_dge.R"})
+                     extra={"note": "BH across all 8 tests (4 pairs x 2 sets); DGE = limma-trend on locked log2CPM matrix, scripts/R/14_discovery_stagepair_dge.R"})
     print(g.round(4).to_string(index=False))
     for name in ["Suppressors", "Drivers"]:
         sub = g[(g["set"] == name) & (g.p_adj < 0.05) & (g.NES > 0)]

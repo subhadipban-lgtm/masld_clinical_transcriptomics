@@ -1,6 +1,5 @@
 # MASLD-Clinical_Transcriptomics
 
-
 This repository contains the complete, numbered analysis pipeline
 for the accompanying manuscript.
 
@@ -18,11 +17,6 @@ evaluated under a size-matched random-set null guard, does not carry staging
 information beyond genome-wide expression drift and is reported as a
 well-characterised negative.
 
-**Disclaimer:** For research and hypothesis generation only. No therapeutic
-recommendations are made. The browser performs lookup of curated interactions
-(CTD, DrugBank, DrugCentral, DGIdb) for user-supplied gene lists; it applies no
-predictive model.
-
 ## Repository layout
 
 ```
@@ -30,20 +24,45 @@ data/                  curated databases and reference sets (FerrDb V2 filtered
                        driver/suppressors with provenance, expression matrix,
                        scored metadata)
 pipeline/masld-pipeline/
-  scripts/R/           numbered R stages (01–50): harmonisation, DGE, WGCNA,
-                       fgsea, WS15 locked-signature build, per-stage-pair
-                       limma-trend contrasts (WS27, discovery; WS30, Fujiwara)
-  scripts/python/      numbered Python stages (09–53): GNN baselines, trial
-                       benchmarks, deconvolution, WS26–WS31 follow-ups
-                       (ferroptosis scoring with random-set null guard,
-                       stage-resolved GSEA in both cohorts, paired-biopsy
-                       trajectory, drift-adjusted cell-death pathway table,
-                       permutation-nulled co-expression network, single-cell
-                       effector localisation across donors), and the
-                       revised-manuscript build script
+  scripts/R/           numbered R stages (01-15):
+                       01  5-cohort harmonisation, count merge, limma DGE
+                       02  3-cohort discovery DGE replication
+                       03  full-transcriptome DGE (~group+batch)
+                       04  full-genome DGE (~group+age+batch)
+                       05  build 349-sample discovery cohort from GEO
+                       06  forensic DGE provenance (1137-gene origin)
+                       07  alternative DGE fits, ComBat-seq test
+                       08  locked 649-gene signature via voom+limma
+                       09  WGCNA co-expression modules
+                       10  fgsea on ranked logFC, random null sets
+                       11  signature enrichment, paediatric sensitivity
+                       12  fgseaMultilevel on pre-ranked t-stat
+                       13  hypergeometric matrisome/ECM enrichment
+                       14  per-stage-pair DGE, discovery
+                       15  per-stage-pair DGE, Fujiwara
+  scripts/python/      numbered Python stages (01-17) + utilities:
+                       01  external validation (Fujiwara, EPoS, UCAM)
+                       02  decisive permutation test (10k perms)
+                       03  paired-biopsy longitudinal (58 pairs)
+                       04  single-cell pseudobulk (GSE136103)
+                       05  parse drug targets (CTD/DrugBank/DrugCentral)
+                       06  panel benchmark (vs published signatures)
+                       07  bulk deconvolution (NNLS)
+                       08  ferroptosis scoring, bootstrap AUROC
+                       09  per-stage-pair GSEA, paired trajectory
+                       10  co-expression network, permutation null
+                       11  cell-death pathway stage association
+                       12  single-cell effector localisation
+                       13  matrisome GSEA replication
+                       14  Fujiwara GSEA, NABA matrisome
+                       15  Fujiwara direct mean-z score test
+                       16  random-set null + covariate adjustment
+                       17  null-guarded pathway table (7 pathways)
+                       build_manuscript.py / build_manuscript_v2.py
+                           manuscript DOCX builders
 ```
 
-Scripts are numbered by workflow stage (WS); each writes `results/stats_*.json`
+Scripts are numbered in execution order; each writes `results/stats_*.json`
 provenance alongside its outputs. Random seeds are fixed and recorded, and every
 mean-z pathway score is reported against a 1,000-set size-matched random null.
 
